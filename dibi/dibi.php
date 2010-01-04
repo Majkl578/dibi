@@ -17,55 +17,26 @@
  * @package    dibi
  */
 
+namespace Dibi;
 
 /**
  * Check PHP configuration.
  */
-if (version_compare(PHP_VERSION, '5.2.0', '<')) {
-	throw new Exception('dibi needs PHP 5.2.0 or newer.');
+if (version_compare(PHP_VERSION, '5.3', '<')) {
+	throw new \Exception('This version of dibi uses namespaces and therefore needs PHP 5.3 or newer.');
 }
 
 @set_magic_quotes_runtime(FALSE); // intentionally @
 
 
-
-/**
- * Compatibility with Nette
- */
-if (!class_exists('NotImplementedException', FALSE)) {
-	class NotImplementedException extends LogicException {}
-}
-
-if (!class_exists('NotSupportedException', FALSE)) {
-	class NotSupportedException extends LogicException {}
-}
-
-if (!class_exists('MemberAccessException', FALSE)) {
-	class MemberAccessException extends LogicException {}
-}
-
-if (!class_exists('InvalidStateException', FALSE)) {
-	class InvalidStateException extends RuntimeException {}
-}
-
-if (!class_exists('IOException', FALSE)) {
-	class IOException extends RuntimeException {}
-}
-
-if (!class_exists('FileNotFoundException', FALSE)) {
-	class FileNotFoundException extends IOException {}
-}
-
-if (!interface_exists(/*Nette\*/'IDebuggable', FALSE)) {
-	require_once dirname(__FILE__) . '/Nette/IDebuggable.php';
-}
-
+//nette compatibility
+require __DIR__ . '/Nette/compatibility.php';
 
 
 /**
  * Back-compatibility
  */
-class DibiVariable extends DateTime
+class Variable extends \DateTime
 {
 	function __construct($val)
 	{
@@ -76,18 +47,18 @@ class DibiVariable extends DateTime
 
 
 // dibi libraries
-require_once dirname(__FILE__) . '/libs/interfaces.php';
-require_once dirname(__FILE__) . '/libs/DibiObject.php';
-require_once dirname(__FILE__) . '/libs/DibiException.php';
-require_once dirname(__FILE__) . '/libs/DibiConnection.php';
-require_once dirname(__FILE__) . '/libs/DibiResult.php';
-require_once dirname(__FILE__) . '/libs/DibiResultIterator.php';
-require_once dirname(__FILE__) . '/libs/DibiRow.php';
-require_once dirname(__FILE__) . '/libs/DibiTranslator.php';
-require_once dirname(__FILE__) . '/libs/DibiDataSource.php';
-require_once dirname(__FILE__) . '/libs/DibiFluent.php';
-require_once dirname(__FILE__) . '/libs/DibiDatabaseInfo.php';
-require_once dirname(__FILE__) . '/libs/DibiProfiler.php';
+require_once __DIR__ . '/libs/interfaces.php';
+require_once __DIR__ . '/libs/Object.php';
+require_once __DIR__ . '/libs/Exception.php';
+require_once __DIR__ . '/libs/Connection.php';
+require_once __DIR__ . '/libs/Result.php';
+require_once __DIR__ . '/libs/ResultIterator.php';
+require_once __DIR__ . '/libs/Row.php';
+require_once __DIR__ . '/libs/Translator.php';
+require_once __DIR__ . '/libs/DataSource.php';
+require_once __DIR__ . '/libs/Fluent.php';
+require_once __DIR__ . '/libs/DatabaseInfo.php';
+require_once __DIR__ . '/libs/Profiler.php';
 
 
 
@@ -100,7 +71,7 @@ require_once dirname(__FILE__) . '/libs/DibiProfiler.php';
  * store connections info.
  *
  * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @package    Dibi
  */
 class dibi
 {
@@ -146,10 +117,10 @@ class dibi
 	const ASC = 'ASC', DESC = 'DESC';
 	/**#@-*/
 
-	/** @var DibiConnection[]  Connection registry storage for DibiConnection objects */
+	/** @var Connection[]  Connection registry storage for Connection objects */
 	private static $registry = array();
 
-	/** @var DibiConnection  Current connection */
+	/** @var Connection  Current connection */
 	private static $connection;
 
 	/** @var array  Substitutions for identifiers */
@@ -161,7 +132,7 @@ class dibi
 	/** @var array  @see addHandler */
 	private static $handlers = array();
 
-	/** @var string  Last SQL command @see dibi::query() */
+	/** @var string  Last SQL command @see Dibi\dibi::query() */
 	public static $sql;
 
 	/** @var int  Elapsed time for last query */
@@ -183,7 +154,7 @@ class dibi
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_called_class());
 	}
 
 
@@ -193,21 +164,21 @@ class dibi
 
 
 	/**
-	 * Creates a new DibiConnection object and connects it to specified database.
-	 * @param  array|string|ArrayObject connection parameters
+	 * Creates a new Connection object and connects it to specified database.
+	 * @param  array|string|\ArrayObject connection parameters
 	 * @param  string       connection name
-	 * @return DibiConnection
-	 * @throws DibiException
+	 * @return Connection
+	 * @throws Exception
 	 */
 	public static function connect($config = array(), $name = 0)
 	{
-		return self::$connection = self::$registry[$name] = new DibiConnection($config, $name);
+		return self::$connection = self::$registry[$name] = new Connection($config, $name);
 	}
 
 
 
 	/**
-	 * Disconnects from database (doesn't destroy DibiConnection object).
+	 * Disconnects from database (doesn't destroy Dibi\Connection object).
 	 * @return void
 	 */
 	public static function disconnect()
@@ -231,21 +202,21 @@ class dibi
 	/**
 	 * Retrieve active connection.
 	 * @param  string   connection registy name
-	 * @return DibiConnection
-	 * @throws DibiException
+	 * @return Dibi\Connection
+	 * @throws Dibi\Exception
 	 */
 	public static function getConnection($name = NULL)
 	{
 		if ($name === NULL) {
 			if (self::$connection === NULL) {
-				throw new DibiException('Dibi is not connected to database.');
+				throw new Exception('Dibi is not connected to database.');
 			}
 
 			return self::$connection;
 		}
 
 		if (!isset(self::$registry[$name])) {
-			throw new DibiException("There is no connection named '$name'.");
+			throw new Exception("There is no connection named '$name'.");
 		}
 
 		return self::$registry[$name];
@@ -257,7 +228,7 @@ class dibi
 	 * Change active connection.
 	 * @param  string   connection registy name
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function activate($name)
 	{
@@ -268,8 +239,8 @@ class dibi
 
 	/**
 	 * Retrieve active connection profiler.
-	 * @return IDibiProfiler
-	 * @throws DibiException
+	 * @return IProfiler
+	 * @throws Exception
 	 */
 	public static function getProfiler()
 	{
@@ -283,10 +254,10 @@ class dibi
 
 
 	/**
-	 * Generates and executes SQL query - Monostate for DibiConnection::query().
+	 * Generates and executes SQL query - Monostate for Connection::query().
 	 * @param  array|mixed      one or more arguments
-	 * @return DibiResult|int   result set object (if any)
-	 * @throws DibiException
+	 * @return Result|int   result set object (if any)
+	 * @throws Exception
 	 */
 	public static function query($args)
 	{
@@ -297,9 +268,9 @@ class dibi
 
 
 	/**
-	 * Executes the SQL query - Monostate for DibiConnection::nativeQuery().
+	 * Executes the SQL query - Monostate for Connection::nativeQuery().
 	 * @param  string           SQL statement.
-	 * @return DibiResult|int   result set object (if any)
+	 * @return Result|int   result set object (if any)
 	 */
 	public static function nativeQuery($sql)
 	{
@@ -309,7 +280,7 @@ class dibi
 
 
 	/**
-	 * Generates and prints SQL query - Monostate for DibiConnection::test().
+	 * Generates and prints SQL query - Monostate for Connection::test().
 	 * @param  array|mixed  one or more arguments
 	 * @return bool
 	 */
@@ -322,9 +293,9 @@ class dibi
 
 
 	/**
-	 * Generates and returns SQL query as DibiDataSource - Monostate for DibiConnection::test().
+	 * Generates and returns SQL query as DataSource - Monostate for Connection::dataSource().
 	 * @param  array|mixed      one or more arguments
-	 * @return DibiDataSource
+	 * @return DataSource
 	 */
 	public static function dataSource($args)
 	{
@@ -335,10 +306,10 @@ class dibi
 
 
 	/**
-	 * Executes SQL query and fetch result - Monostate for DibiConnection::query() & fetch().
+	 * Executes SQL query and fetch result - Monostate for Connection::query() & fetch().
 	 * @param  array|mixed    one or more arguments
-	 * @return DibiRow
-	 * @throws DibiException
+	 * @return Row
+	 * @throws Exception
 	 */
 	public static function fetch($args)
 	{
@@ -349,10 +320,10 @@ class dibi
 
 
 	/**
-	 * Executes SQL query and fetch results - Monostate for DibiConnection::query() & fetchAll().
+	 * Executes SQL query and fetch results - Monostate for Connection::query() & fetchAll().
 	 * @param  array|mixed    one or more arguments
-	 * @return array of DibiRow
-	 * @throws DibiException
+	 * @return array of Row
+	 * @throws Exception
 	 */
 	public static function fetchAll($args)
 	{
@@ -363,10 +334,10 @@ class dibi
 
 
 	/**
-	 * Executes SQL query and fetch first column - Monostate for DibiConnection::query() & fetchSingle().
+	 * Executes SQL query and fetch first column - Monostate for Connection::query() & fetchSingle().
 	 * @param  array|mixed    one or more arguments
 	 * @return string
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function fetchSingle($args)
 	{
@@ -377,10 +348,10 @@ class dibi
 
 
 	/**
-	 * Executes SQL query and fetch pairs - Monostate for DibiConnection::query() & fetchPairs().
+	 * Executes SQL query and fetch pairs - Monostate for Connection::query() & fetchPairs().
 	 * @param  array|mixed    one or more arguments
 	 * @return string
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function fetchPairs($args)
 	{
@@ -392,9 +363,9 @@ class dibi
 
 	/**
 	 * Gets the number of affected rows.
-	 * Monostate for DibiConnection::getAffectedRows()
+	 * Monostate for Connection::getAffectedRows()
 	 * @return int  number of rows
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function getAffectedRows()
 	{
@@ -406,7 +377,7 @@ class dibi
 	/**
 	 * Gets the number of affected rows. Alias for getAffectedRows().
 	 * @return int  number of rows
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function affectedRows()
 	{
@@ -417,10 +388,10 @@ class dibi
 
 	/**
 	 * Retrieves the ID generated for an AUTO_INCREMENT column by the previous INSERT query.
-	 * Monostate for DibiConnection::getInsertId()
+	 * Monostate for Connection::getInsertId()
 	 * @param  string     optional sequence name
 	 * @return int
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function getInsertId($sequence=NULL)
 	{
@@ -433,7 +404,7 @@ class dibi
 	 * Retrieves the ID generated for an AUTO_INCREMENT column. Alias for getInsertId().
 	 * @param  string     optional sequence name
 	 * @return int
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function insertId($sequence=NULL)
 	{
@@ -443,10 +414,10 @@ class dibi
 
 
 	/**
-	 * Begins a transaction - Monostate for DibiConnection::begin().
+	 * Begins a transaction - Monostate for Connection::begin().
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function begin($savepoint = NULL)
 	{
@@ -456,10 +427,10 @@ class dibi
 
 
 	/**
-	 * Commits statements in a transaction - Monostate for DibiConnection::commit($savepoint = NULL).
+	 * Commits statements in a transaction - Monostate for Connection::commit($savepoint = NULL).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function commit($savepoint = NULL)
 	{
@@ -469,10 +440,10 @@ class dibi
 
 
 	/**
-	 * Rollback changes in a transaction - Monostate for DibiConnection::rollback().
+	 * Rollback changes in a transaction - Monostate for Connection::rollback().
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public static function rollback($savepoint = NULL)
 	{
@@ -482,8 +453,8 @@ class dibi
 
 
 	/**
-	 * Gets a information about the current database - Monostate for DibiConnection::getDatabaseInfo().
-	 * @return DibiDatabaseInfo
+	 * Gets a information about the current database - Monostate for Connection::getDatabaseInfo().
+	 * @return DatabaseInfo
 	 */
 	public static function getDatabaseInfo()
 	{
@@ -522,7 +493,7 @@ class dibi
 
 
 	/**
-	 * @return DibiFluent
+	 * @return Fluent
 	 */
 	public static function command()
 	{
@@ -533,7 +504,7 @@ class dibi
 
 	/**
 	 * @param  string    column name
-	 * @return DibiFluent
+	 * @return Fluent
 	 */
 	public static function select($args)
 	{
@@ -546,7 +517,7 @@ class dibi
 	/**
 	 * @param  string   table
 	 * @param  array
-	 * @return DibiFluent
+	 * @return Fluent
 	 */
 	public static function update($table, $args)
 	{
@@ -558,7 +529,7 @@ class dibi
 	/**
 	 * @param  string   table
 	 * @param  array
-	 * @return DibiFluent
+	 * @return Fluent
 	 */
 	public static function insert($table, $args)
 	{
@@ -569,7 +540,7 @@ class dibi
 
 	/**
 	 * @param  string   table
-	 * @return DibiFluent
+	 * @return Fluent
 	 */
 	public static function delete($table)
 	{
@@ -587,7 +558,7 @@ class dibi
 	 */
 	public static function datetime($time = NULL)
 	{
-		return new DateTime(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
+		return new \DateTime(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
 	}
 
 
@@ -597,7 +568,7 @@ class dibi
 	 */
 	public static function date($date = NULL)
 	{
-		return new DateTime(is_numeric($date) ? date('Y-m-d', $date) : $date);
+		return new \DateTime(is_numeric($date) ? date('Y-m-d', $date) : $date);
 	}
 
 
@@ -644,7 +615,7 @@ class dibi
 	{
 		if (!is_callable($callback)) {
 			$able = is_callable($callback, TRUE, $textual);
-			throw new InvalidArgumentException("Handler '$textual' is not " . ($able ? 'callable.' : 'valid PHP callback.'));
+			throw new \InvalidArgumentException("Handler '$textual' is not " . ($able ? 'callable.' : 'valid PHP callback.'));
 		}
 
 		self::$substFallBack = $callback;
@@ -659,7 +630,7 @@ class dibi
 	 */
 	public static function defaultSubstFallback($expr)
 	{
-		throw new InvalidStateException("Missing substitution for '$expr' expression.");
+		throw new \InvalidStateException("Missing substitution for '$expr' expression.");
 	}
 
 
@@ -669,15 +640,15 @@ class dibi
 
 
 	/**
-	 * Prints out a syntax highlighted version of the SQL command or DibiResult.
-	 * @param  string|DibiResult
+	 * Prints out a syntax highlighted version of the SQL command or Result.
+	 * @param  string|Result
 	 * @param  bool  return output instead of printing it?
 	 * @return string
 	 */
 	public static function dump($sql = NULL, $return = FALSE)
 	{
 		ob_start();
-		if ($sql instanceof DibiResult) {
+		if ($sql instanceof Result) {
 			$sql->dump();
 
 		} else {
@@ -698,7 +669,7 @@ class dibi
 			$sql = preg_replace("#\n{2,}#", "\n", $sql);
 
 			// syntax highlight
-			$sql = preg_replace_callback("#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])($keywords1)(?=[\\s,)])|(?<=[\\s,(=])($keywords2)(?=[\\s,)=])#is", array('dibi', 'highlightCallback'), $sql);
+			$sql = preg_replace_callback("#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])($keywords1)(?=[\\s,)])|(?<=[\\s,(=])($keywords2)(?=[\\s,)=])#is", array(__CLASS__, 'highlightCallback'), $sql);
 			$sql = trim($sql);
 			echo '<pre class="dump">', $sql, "</pre>\n";
 		}

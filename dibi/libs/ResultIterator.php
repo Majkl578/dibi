@@ -11,11 +11,13 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * External result set iterator.
  *
- * This can be returned by DibiResult::getIterator() method or using foreach
+ * This can be returned by Result::getIterator() method or using foreach
  * <code>
  * $result = dibi::query('SELECT * FROM table');
  * foreach ($result as $row) {
@@ -34,9 +36,9 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiResultIterator implements Iterator, Countable
+class ResultIterator implements \Iterator, \Countable
 {
-	/** @var DibiResult */
+	/** @var Result */
 	private $result;
 
 	/** @var int */
@@ -53,11 +55,11 @@ class DibiResultIterator implements Iterator, Countable
 
 
 	/**
-	 * @param  DibiResult
+	 * @param  Result
 	 * @param  int  offset
 	 * @param  int  limit
 	 */
-	public function __construct(DibiResult $result, $offset = NULL, $limit = NULL)
+	public function __construct(Result $result, $offset = NULL, $limit = NULL)
 	{
 		$this->result = $result;
 		$this->offset = (int) $offset;
@@ -126,7 +128,7 @@ class DibiResultIterator implements Iterator, Countable
 
 
 	/**
-	 * Required by the Countable interface.
+	 * Required by the \Countable interface.
 	 * @return int
 	 */
 	public function count()

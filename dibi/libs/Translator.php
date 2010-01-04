@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * dibi SQL translator.
@@ -18,9 +20,9 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-final class DibiTranslator extends DibiObject
+final class Translator extends Object
 {
-	/** @var IDibiDriver */
+	/** @var IDriver */
 	private $driver;
 
 	/** @var int */
@@ -49,7 +51,7 @@ final class DibiTranslator extends DibiObject
 
 
 
-	public function __construct(IDibiDriver $driver)
+	public function __construct(IDriver $driver)
 	{
 		$this->driver = $driver;
 	}
@@ -57,7 +59,7 @@ final class DibiTranslator extends DibiObject
 
 
 	/**
-	 * return IDibiDriver.
+	 * return IDriver.
 	 */
 	public function getDriver()
 	{
@@ -70,7 +72,7 @@ final class DibiTranslator extends DibiObject
 	 * Generates SQL.
 	 * @param  array
 	 * @return string
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	public function translate(array $args)
 	{
@@ -134,7 +136,7 @@ final class DibiTranslator extends DibiObject
 				continue;
 			}
 
-			if ($arg instanceof ArrayObject) {
+			if ($arg instanceof \ArrayObject) {
 				$arg = (array) $arg;
 			}
 
@@ -170,7 +172,7 @@ final class DibiTranslator extends DibiObject
 		$sql = implode(' ', $sql);
 
 		if ($this->hasError) {
-			throw new DibiException('SQL translate error', 0, $sql);
+			throw new Exception('SQL translate error', 0, $sql);
 		}
 
 		// apply limit
@@ -192,7 +194,7 @@ final class DibiTranslator extends DibiObject
 	public function formatValue($value, $modifier)
 	{
 		// array processing (with or without modifier)
-		if ($value instanceof ArrayObject) {
+		if ($value instanceof \ArrayObject) {
 			$value = (array) $value;
 		}
 
@@ -318,7 +320,7 @@ final class DibiTranslator extends DibiObject
 
 		// with modifier procession
 		if ($modifier) {
-			if ($value !== NULL && !is_scalar($value) && !($value instanceof DateTime)) {  // array is already processed
+			if ($value !== NULL && !is_scalar($value) && !($value instanceof \DateTime)) {  // array is already processed
 				$this->hasError = TRUE;
 				return '**Unexpected type ' . gettype($value) . '**';
 			}
@@ -362,7 +364,7 @@ final class DibiTranslator extends DibiObject
 						$value = (int) $value; // timestamp
 
 					} elseif (is_string($value)) {
-						$value = new DateTime($value);
+						$value = new \DateTime($value);
 					}
 					return $this->driver->escape($value, $modifier);
 				}
@@ -418,7 +420,7 @@ final class DibiTranslator extends DibiObject
 		} elseif ($value === NULL) {
 			return 'NULL';
 
-		} elseif ($value instanceof DateTime) {
+		} elseif ($value instanceof \DateTime) {
 			return $this->driver->escape($value, dibi::DATETIME);
 
 		} else {

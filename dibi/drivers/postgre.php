@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi;
+
+
 /**
  * The dibi driver for PostgreSQL database.
  *
@@ -26,7 +30,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiPostgreDriver extends DibiObject implements IDibiDriver
+class Postgre extends Dibi\Object implements Dibi\IDriver
 {
 	/** @var resource  Connection resource */
 	private $connection;
@@ -40,12 +44,12 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('pgsql')) {
-			throw new DibiDriverException("PHP extension 'pgsql' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'pgsql' is not loaded.");
 		}
 	}
 
@@ -54,7 +58,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
@@ -66,32 +70,32 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 				$string = $config['string'];
 			} else {
 				$string = '';
-				DibiConnection::alias($config, 'user', 'username');
+				Dibi\Connection::alias($config, 'user', 'username');
 				foreach (array('host','hostaddr','port','dbname','user','password','connect_timeout','options','sslmode','service') as $key) {
 					if (isset($config[$key])) $string .= $key . '=' . $config[$key] . ' ';
 				}
 			}
 
-			DibiDriverException::tryError();
+			Dibi\DriverException::tryError();
 			if (empty($config['persistent'])) {
 				$this->connection = pg_connect($string, PGSQL_CONNECT_FORCE_NEW);
 			} else {
 				$this->connection = pg_pconnect($string, PGSQL_CONNECT_FORCE_NEW);
 			}
-			if (DibiDriverException::catchError($msg)) {
-				throw new DibiDriverException($msg, 0);
+			if (Dibi\DriverException::catchError($msg)) {
+				throw new Dibi\DriverException($msg, 0);
 			}
 		}
 
 		if (!is_resource($this->connection)) {
-			throw new DibiDriverException('Connecting error.');
+			throw new Dibi\DriverException('Connecting error.');
 		}
 
 		if (isset($config['charset'])) {
-			DibiDriverException::tryError();
+			Dibi\DriverException::tryError();
 			pg_set_client_encoding($this->connection, $config['charset']);
-			if (DibiDriverException::catchError($msg)) {
-				throw new DibiDriverException($msg, 0);
+			if (Dibi\DriverException::catchError($msg)) {
+				throw new Dibi\DriverException($msg, 0);
 			}
 		}
 
@@ -119,15 +123,15 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
 	 * @param  bool        update affected rows?
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
 		$this->resultSet = @pg_query($this->connection, $sql); // intentionally @
 
 		if ($this->resultSet === FALSE) {
-			throw new DibiDriverException(pg_last_error($this->connection), 0, $sql);
+			throw new Dibi\DriverException(pg_last_error($this->connection), 0, $sql);
 		}
 
 		return is_resource($this->resultSet) && pg_num_fields($this->resultSet) ? clone $this : NULL;
@@ -172,7 +176,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function begin($savepoint = NULL)
 	{
@@ -185,7 +189,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
@@ -198,7 +202,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
@@ -225,28 +229,28 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
+		case Dibi\dibi::TEXT:
 			if ($this->escMethod) {
 				return "'" . pg_escape_string($this->connection, $value) . "'";
 			} else {
 				return "'" . pg_escape_string($value) . "'";
 			}
 
-		case dibi::BINARY:
+		case Dibi\dibi::BINARY:
 			if ($this->escMethod) {
 				return "'" . pg_escape_bytea($this->connection, $value) . "'";
 			} else {
 				return "'" . pg_escape_bytea($value) . "'";
 			}
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			// @see http://www.postgresql.org/docs/8.2/static/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
 			$a = strrpos($value, '.');
 			if ($a === FALSE) {
@@ -256,17 +260,17 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 				return substr($value, 0, $a) . '."' . str_replace('"', '""', substr($value, $a + 1)) . '"';
 			}
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $value ? 'TRUE' : 'FALSE';
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new Dibi\InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -275,16 +279,16 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Decodes data from result set.
 	 * @param  string    value
-	 * @param  string    type (dibi::BINARY)
+	 * @param  string    type (Dibi\dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return pg_unescape_bytea($value);
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -405,7 +409,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	{
 		$version = pg_version($this->connection);
 		if ($version['server'] < 8) {
-			throw new DibiDriverException('Reflection requires PostgreSQL 8.');
+			throw new Dibi\DriverException('Reflection requires PostgreSQL 8.');
 		}
 
 		$this->query("
@@ -427,7 +431,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getColumns($table)
 	{
-		$_table = $this->escape($table, dibi::TEXT);
+		$_table = $this->escape($table, Dibi\dibi::TEXT);
 		$this->query("
 			SELECT indkey
 			FROM pg_class
@@ -469,7 +473,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getIndexes($table)
 	{
-		$_table = $this->escape($table, dibi::TEXT);
+		$_table = $this->escape($table, Dibi\dibi::TEXT);
 		$this->query("
 			SELECT ordinal_position, column_name
 			FROM information_schema.columns
@@ -512,7 +516,7 @@ class DibiPostgreDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

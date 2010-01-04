@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * Default implementation of IDataSource for dibi.
@@ -18,15 +20,15 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiDataSource extends DibiObject implements IDataSource
+class DataSource extends Object implements IDataSource
 {
-	/** @var DibiConnection */
+	/** @var Connection */
 	private $connection;
 
 	/** @var string */
 	private $sql;
 
-	/** @var DibiResult */
+	/** @var Result */
 	private $result;
 
 	/** @var int */
@@ -54,9 +56,9 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 	/**
 	 * @param  string  SQL command or table or view name, as data source
-	 * @param  DibiConnection  connection
+	 * @param  Connection  connection
 	 */
-	public function __construct($sql, DibiConnection $connection)
+	public function __construct($sql, Connection $connection)
 	{
 		if (strpos($sql, ' ') === FALSE) {
 			$this->sql = $connection->getDriver()->escape($sql, dibi::IDENTIFIER); // table name
@@ -72,7 +74,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 	 * Selects columns to query.
 	 * @param  string|array  column name or array of column names
 	 * @param  string  		 column alias
-	 * @return DibiDataSource  provides a fluent interface
+	 * @return DataSource  provides a fluent interface
 	 */
 	public function select($col, $as = NULL)
 	{
@@ -90,7 +92,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 	/**
 	 * Adds conditions to query.
 	 * @param  mixed  conditions
-	 * @return DibiDataSource  provides a fluent interface
+	 * @return DataSource  provides a fluent interface
 	 */
 	public function where($cond)
 	{
@@ -110,7 +112,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 	 * Selects columns to order by.
 	 * @param  string|array  column name or array of column names
 	 * @param  string  		 sorting direction
-	 * @return DibiDataSource  provides a fluent interface
+	 * @return DataSource  provides a fluent interface
 	 */
 	public function orderBy($row, $sorting = 'ASC')
 	{
@@ -129,7 +131,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 	 * Limits number of rows.
 	 * @param  int limit
 	 * @param  int offset
-	 * @return DibiDataSource  provides a fluent interface
+	 * @return DataSource  provides a fluent interface
 	 */
 	public function applyLimit($limit, $offset = NULL)
 	{
@@ -143,7 +145,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 	/**
 	 * Returns the dibi connection.
-	 * @return DibiConnection
+	 * @return Connection
 	 */
 	final public function getConnection()
 	{
@@ -157,8 +159,8 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 
 	/**
-	 * Returns (and queries) DibiResult.
-	 * @return DibiResult
+	 * Returns (and queries) Result.
+	 * @return Result
 	 */
 	public function getResult()
 	{
@@ -171,7 +173,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 
 	/**
-	 * @return DibiResultIterator
+	 * @return ResultIterator
 	 */
 	public function getIterator()
 	{
@@ -182,7 +184,7 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 	/**
 	 * Generates, executes SQL query and fetches the single row.
-	 * @return DibiRow|FALSE  array on success, FALSE if no next record
+	 * @return Row|FALSE  array on success, FALSE if no next record
 	 */
 	public function fetch()
 	{
@@ -254,8 +256,8 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 
 	/**
-	 * Returns this data source wrapped in DibiFluent object.
-	 * @return DibiFluent
+	 * Returns this data source wrapped in Fluent object.
+	 * @return Fluent
 	 */
 	public function toFluent()
 	{
@@ -265,8 +267,8 @@ class DibiDataSource extends DibiObject implements IDataSource
 
 
 	/**
-	 * Returns this data source wrapped in DibiDataSource object.
-	 * @return DibiDataSource
+	 * Returns this data source wrapped in DataSource object.
+	 * @return DataSource
 	 */
 	public function toDataSource()
 	{

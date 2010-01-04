@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * Reflection metadata class for a database.
@@ -18,9 +20,9 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiDatabaseInfo extends DibiObject
+class DatabaseInfo extends Object
 {
-	/** @var IDibiDriver */
+	/** @var IDriver */
 	private $driver;
 
 	/** @var string */
@@ -31,7 +33,7 @@ class DibiDatabaseInfo extends DibiObject
 
 
 
-	public function __construct(IDibiDriver $driver, $name)
+	public function __construct(IDriver $driver, $name)
 	{
 		$this->driver = $driver;
 		$this->name = $name;
@@ -50,7 +52,7 @@ class DibiDatabaseInfo extends DibiObject
 
 
 	/**
-	 * @return array of DibiTableInfo
+	 * @return array of TableInfo
 	 */
 	public function getTables()
 	{
@@ -77,7 +79,7 @@ class DibiDatabaseInfo extends DibiObject
 
 	/**
 	 * @param  string
-	 * @return DibiTableInfo
+	 * @return TableInfo
 	 */
 	public function getTable($name)
 	{
@@ -87,7 +89,7 @@ class DibiDatabaseInfo extends DibiObject
 			return $this->tables[$l];
 
 		} else {
-			throw new DibiException("Database '$this->name' has no table '$name'.");
+			throw new Exception("Database '$this->name' has no table '$name'.");
 		}
 	}
 
@@ -113,7 +115,7 @@ class DibiDatabaseInfo extends DibiObject
 		if ($this->tables === NULL) {
 			$this->tables = array();
 			foreach ($this->driver->getTables() as $info) {
-				$this->tables[strtolower($info['name'])] = new DibiTableInfo($this->driver, $info);
+				$this->tables[strtolower($info['name'])] = new TableInfo($this->driver, $info);
 			}
 		}
 	}
@@ -129,9 +131,9 @@ class DibiDatabaseInfo extends DibiObject
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiTableInfo extends DibiObject
+class TableInfo extends Object
 {
-	/** @var IDibiDriver */
+	/** @var IDriver */
 	private $driver;
 
 	/** @var string */
@@ -149,12 +151,12 @@ class DibiTableInfo extends DibiObject
 	/** @var array */
 	private $indexes;
 
-	/** @var DibiIndexInfo */
+	/** @var IndexInfo */
 	private $primaryKey;
 
 
 
-	public function __construct(IDibiDriver $driver, array $info)
+	public function __construct(IDriver $driver, array $info)
 	{
 		$this->driver = $driver;
 		$this->name = $info['name'];
@@ -184,7 +186,7 @@ class DibiTableInfo extends DibiObject
 
 
 	/**
-	 * @return array of DibiColumnInfo
+	 * @return array of ColumnInfo
 	 */
 	public function getColumns()
 	{
@@ -211,7 +213,7 @@ class DibiTableInfo extends DibiObject
 
 	/**
 	 * @param  string
-	 * @return DibiColumnInfo
+	 * @return ColumnInfo
 	 */
 	public function getColumn($name)
 	{
@@ -221,7 +223,7 @@ class DibiTableInfo extends DibiObject
 			return $this->columns[$l];
 
 		} else {
-			throw new DibiException("Table '$this->name' has no column '$name'.");
+			throw new Exception("Table '$this->name' has no column '$name'.");
 		}
 	}
 
@@ -240,7 +242,7 @@ class DibiTableInfo extends DibiObject
 
 
 	/**
-	 * @return array of DibiForeignKeyInfo
+	 * @return array of ForeignKeyInfo
 	 */
 	public function getForeignKeys()
 	{
@@ -251,7 +253,7 @@ class DibiTableInfo extends DibiObject
 
 
 	/**
-	 * @return array of DibiIndexInfo
+	 * @return array of IndexInfo
 	 */
 	public function getIndexes()
 	{
@@ -262,7 +264,7 @@ class DibiTableInfo extends DibiObject
 
 
 	/**
-	 * @return DibiIndexInfo
+	 * @return IndexInfo
 	 */
 	public function getPrimaryKey()
 	{
@@ -280,7 +282,7 @@ class DibiTableInfo extends DibiObject
 		if ($this->columns === NULL) {
 			$this->columns = array();
 			foreach ($this->driver->getColumns($this->name) as $info) {
-				$this->columns[strtolower($info['name'])] = new DibiColumnInfo($this->driver, $info);
+				$this->columns[strtolower($info['name'])] = new ColumnInfo($this->driver, $info);
 			}
 		}
 	}
@@ -299,7 +301,7 @@ class DibiTableInfo extends DibiObject
 				foreach ($info['columns'] as $key => $name) {
 					$info['columns'][$key] = $this->columns[strtolower($name)];
 				}
-				$this->indexes[strtolower($info['name'])] = new DibiIndexInfo($info);
+				$this->indexes[strtolower($info['name'])] = new IndexInfo($info);
 				if (!empty($info['primary'])) {
 					$this->primaryKey = $this->indexes[strtolower($info['name'])];
 				}
@@ -314,7 +316,7 @@ class DibiTableInfo extends DibiObject
 	 */
 	protected function initForeignKeys()
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }
@@ -328,9 +330,9 @@ class DibiTableInfo extends DibiObject
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiResultInfo extends DibiObject
+class ResultInfo extends Object
 {
-	/** @var IDibiDriver */
+	/** @var IDriver */
 	private $driver;
 
 	/** @var array */
@@ -341,7 +343,7 @@ class DibiResultInfo extends DibiObject
 
 
 
-	public function __construct(IDibiDriver $driver)
+	public function __construct(IDriver $driver)
 	{
 		$this->driver = $driver;
 	}
@@ -349,7 +351,7 @@ class DibiResultInfo extends DibiObject
 
 
 	/**
-	 * @return array of DibiColumnInfo
+	 * @return array of ColumnInfo
 	 */
 	public function getColumns()
 	{
@@ -377,7 +379,7 @@ class DibiResultInfo extends DibiObject
 
 	/**
 	 * @param  string
-	 * @return DibiColumnInfo
+	 * @return ColumnInfo
 	 */
 	public function getColumn($name)
 	{
@@ -387,7 +389,7 @@ class DibiResultInfo extends DibiObject
 			return $this->names[$l];
 
 		} else {
-			throw new DibiException("Result set has no column '$name'.");
+			throw new Exception("Result set has no column '$name'.");
 		}
 	}
 
@@ -413,7 +415,7 @@ class DibiResultInfo extends DibiObject
 		if ($this->columns === NULL) {
 			$this->columns = array();
 			foreach ($this->driver->getColumnsMeta() as $info) {
-				$this->columns[] = $this->names[$info['name']] = new DibiColumnInfo($this->driver, $info);
+				$this->columns[] = $this->names[$info['name']] = new ColumnInfo($this->driver, $info);
 			}
 		}
 	}
@@ -429,12 +431,12 @@ class DibiResultInfo extends DibiObject
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiColumnInfo extends DibiObject
+class ColumnInfo extends Object
 {
 	/** @var array */
 	private static $types;
 
-	/** @var IDibiDriver */
+	/** @var IDriver */
 	private $driver;
 
 	/** @var array (name, nativetype, [table], [fullname], [size], [nullable], [default], [autoincrement], [vendor]) */
@@ -445,7 +447,7 @@ class DibiColumnInfo extends DibiObject
 
 
 
-	public function __construct(IDibiDriver $driver, array $info)
+	public function __construct(IDriver $driver, array $info)
 	{
 		$this->driver = $driver;
 		$this->info = $info;
@@ -484,14 +486,14 @@ class DibiColumnInfo extends DibiObject
 
 
 	/**
-	 * @return DibiTableInfo
+	 * @return TableInfo
 	 */
 	public function getTable()
 	{
 		if (empty($this->info['table'])) {
-			throw new DibiException("Table name is unknown.");
+			throw new Exception("Table name is unknown.");
 		}
-		return new DibiTableInfo($this->driver, array('name' => $this->info['table']));
+		return new TableInfo($this->driver, array('name' => $this->info['table']));
 	}
 
 
@@ -611,7 +613,7 @@ class DibiColumnInfo extends DibiObject
  * @package    dibi
  * @todo
  */
-class DibiForeignKeyInfo extends DibiObject
+class ForeignKeyInfo extends Object
 {
 	/** @var string */
 	private $name;
@@ -658,7 +660,7 @@ class DibiForeignKeyInfo extends DibiObject
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiIndexInfo extends DibiObject
+class IndexInfo extends Object
 {
 	/** @var array (name, columns, [unique], [primary]) */
 	private $info;

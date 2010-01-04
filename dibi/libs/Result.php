@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * dibi result-set.
@@ -31,15 +33,15 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiResult extends DibiObject implements IDataSource
+class Result extends Object implements IDataSource
 {
-	/** @var array  IDibiDriver */
+	/** @var array  IDriver */
 	private $driver;
 
 	/** @var array  Translate table */
 	private $xlat;
 
-	/** @var DibiResultInfo */
+	/** @var ResultInfo */
 	private $meta;
 
 	/** @var bool  Already fetched? Used for allowance for first seek(0) */
@@ -49,12 +51,12 @@ class DibiResult extends DibiObject implements IDataSource
 	private $withTables = FALSE;
 
 	/** @var string  returned object class */
-	private $class = 'DibiRow';
+	private $class = 'Dibi\Row';
 
 
 
 	/**
-	 * @param  IDibiDriver
+	 * @param  IDriver
 	 * @param  array
 	 */
 	public function __construct($driver, $config)
@@ -95,8 +97,8 @@ class DibiResult extends DibiObject implements IDataSource
 
 	/**
 	 * Safe access to property $driver.
-	 * @return IDibiDriver
-	 * @throws InvalidStateException
+	 * @return IDriver
+	 * @throws \InvalidStateException
 	 */
 	private function getDriver()
 	{
@@ -117,7 +119,7 @@ class DibiResult extends DibiObject implements IDataSource
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
 	 * @return boolean  TRUE on success, FALSE if unable to seek to specified record
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	final public function seek($row)
 	{
@@ -127,7 +129,7 @@ class DibiResult extends DibiObject implements IDataSource
 
 
 	/**
-	 * Required by the Countable interface.
+	 * Required by the \Countable interface.
 	 * @return int
 	 */
 	final public function count()
@@ -160,14 +162,14 @@ class DibiResult extends DibiObject implements IDataSource
 
 
 	/**
-	 * Required by the IteratorAggregate interface.
+	 * Required by the \IteratorAggregate interface.
 	 * @param  int  offset
 	 * @param  int  limit
-	 * @return DibiResultIterator
+	 * @return ResultIterator
 	 */
 	final public function getIterator($offset = NULL, $limit = NULL)
 	{
-		return new DibiResultIterator($this, $offset, $limit);
+		return new ResultIterator($this, $offset, $limit);
 	}
 
 
@@ -177,9 +179,9 @@ class DibiResult extends DibiObject implements IDataSource
 
 
 	/**
-	 * Set fetched object class. This class should extend the DibiRow class.
+	 * Set fetched object class. This class should extend the Row class.
 	 * @param  string
-	 * @return DibiResult  provides a fluent interface
+	 * @return Result  provides a fluent interface
 	 */
 	public function setRowClass($class)
 	{
@@ -203,7 +205,7 @@ class DibiResult extends DibiObject implements IDataSource
 	/**
 	 * Fetches the row at current position, process optional type conversion.
 	 * and moves the internal cursor to the next position
-	 * @return DibiRow|FALSE  array on success, FALSE if no next record
+	 * @return Row|FALSE  array on success, FALSE if no next record
 	 */
 	final public function fetch()
 	{
@@ -260,7 +262,7 @@ class DibiResult extends DibiObject implements IDataSource
 	 * Fetches all records from table.
 	 * @param  int  offset
 	 * @param  int  limit
-	 * @return array of DibiRow
+	 * @return array of Row
 	 */
 	final public function fetchAll($offset = NULL, $limit = NULL)
 	{
@@ -289,8 +291,8 @@ class DibiResult extends DibiObject implements IDataSource
 	 * - associative descriptor: col1|col2->col3=col4
 	 *   builds a tree:          $tree[$val1][$val2]->col3[$val3] = val4
 	 * @param  string  associative descriptor
-	 * @return DibiRow
-	 * @throws InvalidArgumentException
+	 * @return Row
+	 * @throws \InvalidArgumentException
 	 */
 	final public function fetchAssoc($assoc)
 	{
@@ -309,7 +311,7 @@ class DibiResult extends DibiObject implements IDataSource
 		foreach ($assoc as $as) {
 			// offsetExists ignores NULL in PHP 5.2.1, isset() surprisingly NULL accepts
 			if ($as !== '[]' && $as !== '=' && $as !== '->' && $as !== '|' && !isset($row[$as])) {
-				throw new InvalidArgumentException("Unknown column '$as' in associative descriptor.");
+				throw new \InvalidArgumentException("Unknown column '$as' in associative descriptor.");
 			}
 		}
 
@@ -438,7 +440,7 @@ class DibiResult extends DibiObject implements IDataSource
 	 * @param  string  associative key
 	 * @param  string  value
 	 * @return array
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	final public function fetchPairs($key = NULL, $value = NULL)
 	{
@@ -450,7 +452,7 @@ class DibiResult extends DibiObject implements IDataSource
 
 		if ($value === NULL) {
 			if ($key !== NULL) {
-				throw new InvalidArgumentException("Either none or both columns must be specified.");
+				throw new \InvalidArgumentException("Either none or both columns must be specified.");
 			}
 
 			// autodetect
@@ -467,7 +469,7 @@ class DibiResult extends DibiObject implements IDataSource
 
 		} else {
 			if (!isset($row[$value])) {
-				throw new InvalidArgumentException("Unknown value column '$value'.");
+				throw new \InvalidArgumentException("Unknown value column '$value'.");
 			}
 
 			if ($key === NULL) { // indexed-array
@@ -478,7 +480,7 @@ class DibiResult extends DibiObject implements IDataSource
 			}
 
 			if (!isset($row[$key])) {
-				throw new InvalidArgumentException("Unknown key column '$key'.");
+				throw new \InvalidArgumentException("Unknown key column '$key'.");
 			}
 		}
 
@@ -498,8 +500,8 @@ class DibiResult extends DibiObject implements IDataSource
 	/**
 	 * Qualifiy each column name with the table name?
 	 * @param  bool
-	 * @return DibiResult  provides a fluent interface
-	 * @throws DibiException
+	 * @return Result  provides a fluent interface
+	 * @throws Exception
 	 */
 	final public function setWithTables($val)
 	{
@@ -538,9 +540,9 @@ class DibiResult extends DibiObject implements IDataSource
 	/**
 	 * Define column type.
 	 * @param  string  column
-	 * @param  string  type (use constant Dibi::*)
+	 * @param  string  type (use constant dibi::*)
 	 * @param  string  optional format
-	 * @return DibiResult  provides a fluent interface
+	 * @return Result  provides a fluent interface
 	 */
 	final public function setType($col, $type, $format = NULL)
 	{
@@ -566,7 +568,7 @@ class DibiResult extends DibiObject implements IDataSource
 	/**
 	 * Define multiple columns types.
 	 * @param  array
-	 * @return DibiResult  provides a fluent interface
+	 * @return Result  provides a fluent interface
 	 * @internal
 	 */
 	final public function setTypes(array $types)
@@ -623,13 +625,13 @@ class DibiResult extends DibiObject implements IDataSource
 				return is_numeric($value) ? (int) $value : strtotime($value);
 
 			} elseif ($format === TRUE) { // return DateTime object
-				return new DateTime(is_numeric($value) ? date('Y-m-d H:i:s', $value) : $value);
+				return new \DateTime(is_numeric($value) ? date('Y-m-d H:i:s', $value) : $value);
 
 			} elseif (is_numeric($value)) { // single timestamp
 				return date($format, $value);
 
 			} else {
-				$value = new DateTime($value);
+				$value = new \DateTime($value);
 				return $value->format($format);
 			}
 
@@ -645,12 +647,12 @@ class DibiResult extends DibiObject implements IDataSource
 
 	/**
 	 * Returns a meta information about the current result set.
-	 * @return DibiResultInfo
+	 * @return ResultInfo
 	 */
 	public function getInfo()
 	{
 		if ($this->meta === NULL) {
-			$this->meta = new DibiResultInfo($this->getDriver());
+			$this->meta = new ResultInfo($this->getDriver());
 		}
 		return $this->meta;
 	}

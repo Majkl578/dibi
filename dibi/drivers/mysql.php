@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi;
+
+
 /**
  * The dibi driver for MySQL database.
  *
@@ -32,7 +36,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiMySqlDriver extends DibiObject implements IDibiDriver
+class MySql extends Dibi\Object implements Dibi\IDriver
 {
 	const ERROR_ACCESS_DENIED = 1045;
 	const ERROR_DUPLICATE_ENTRY = 1062;
@@ -50,12 +54,12 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('mysql')) {
-			throw new DibiDriverException("PHP extension 'mysql' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'mysql' is not loaded.");
 		}
 	}
 
@@ -64,11 +68,11 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
-		DibiConnection::alias($config, 'options');
+		Dibi\Connection::alias($config, 'options');
 
 		if (isset($config['resource'])) {
 			$this->connection = $config['resource'];
@@ -102,7 +106,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 		}
 
 		if (!is_resource($this->connection)) {
-			throw new DibiDriverException(mysql_error(), mysql_errno());
+			throw new Dibi\DriverException(mysql_error(), mysql_errno());
 		}
 
 		if (isset($config['charset'])) {
@@ -114,20 +118,20 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 			if (!$ok) {
 				$ok = @mysql_query("SET NAMES '$config[charset]'", $this->connection); // intentionally @
 				if (!$ok) {
-					throw new DibiDriverException(mysql_error($this->connection), mysql_errno($this->connection));
+					throw new Dibi\DriverException(mysql_error($this->connection), mysql_errno($this->connection));
 				}
 			}
 		}
 
 		if (isset($config['database'])) {
 			if (!@mysql_select_db($config['database'], $this->connection)) { // intentionally @
-				throw new DibiDriverException(mysql_error($this->connection), mysql_errno($this->connection));
+				throw new Dibi\DriverException(mysql_error($this->connection), mysql_errno($this->connection));
 			}
 		}
 
 		if (isset($config['sqlmode'])) {
 			if (!@mysql_query("SET sql_mode='$config[sqlmode]'", $this->connection)) { // intentionally @
-				throw new DibiDriverException(mysql_error($this->connection), mysql_errno($this->connection));
+				throw new Dibi\DriverException(mysql_error($this->connection), mysql_errno($this->connection));
 			}
 		}
 
@@ -150,8 +154,8 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
@@ -162,7 +166,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 		}
 
 		if (mysql_errno($this->connection)) {
-			throw new DibiDriverException(mysql_error($this->connection), mysql_errno($this->connection), $sql);
+			throw new Dibi\DriverException(mysql_error($this->connection), mysql_errno($this->connection), $sql);
 		}
 
 		return is_resource($this->resultSet) ? clone $this : NULL;
@@ -212,7 +216,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function begin($savepoint = NULL)
 	{
@@ -225,7 +229,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
@@ -238,7 +242,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
@@ -265,35 +269,35 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
 	 * @throws InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
+		case Dibi\dibi::TEXT:
 			return "'" . mysql_real_escape_string($value, $this->connection) . "'";
 
-		case dibi::BINARY:
+		case Dibi\dibi::BINARY:
 			return "_binary'" . mysql_real_escape_string($value, $this->connection) . "'";
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			// @see http://dev.mysql.com/doc/refman/5.0/en/identifiers.html
 			$value = str_replace('`', '``', $value);
 			return '`' . str_replace('.', '`.`', $value) . '`';
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $value ? 1 : 0;
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new \InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -304,14 +308,14 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 * @param  string    value
 	 * @param  string    type (dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return $value;
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -345,7 +349,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	public function getRowCount()
 	{
 		if (!$this->buffered) {
-			throw new DibiDriverException('Row count is not available for unbuffered queries.');
+			throw new Dibi\DriverException('Row count is not available for unbuffered queries.');
 		}
 		return mysql_num_rows($this->resultSet);
 	}
@@ -369,12 +373,12 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
 	 * @return boolean  TRUE on success, FALSE if unable to seek to specified record
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function seek($row)
 	{
 		if (!$this->buffered) {
-			throw new DibiDriverException('Cannot seek an unbuffered result set.');
+			throw new Dibi\DriverException('Cannot seek an unbuffered result set.');
 		}
 
 		return mysql_data_seek($this->resultSet, $row);
@@ -508,7 +512,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

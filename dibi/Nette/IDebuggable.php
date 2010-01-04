@@ -17,7 +17,7 @@
  * @package    Nette
  */
 
-/*namespace Nette;*/
+namespace Nette;
 
 
 

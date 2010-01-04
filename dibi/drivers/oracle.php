@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi;
+
+
 /**
  * The dibi driver for Oracle database.
  *
@@ -27,7 +31,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiOracleDriver extends DibiObject implements IDibiDriver
+class Oracle extends Dibi\Object implements Dibi\IDriver
 {
 	/** @var resource  Connection resource */
 	private $connection;
@@ -44,12 +48,12 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('oci8')) {
-			throw new DibiDriverException("PHP extension 'oci8' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'oci8' is not loaded.");
 		}
 	}
 
@@ -58,11 +62,11 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
-		DibiConnection::alias($config, 'charset');
+		Dibi\Connection::alias($config, 'charset');
 		$this->fmtDate = isset($config['formatDate']) ? $config['formatDate'] : 'U';
 		$this->fmtDateTime = isset($config['formatDateTime']) ? $config['formatDateTime'] : 'U';
 
@@ -74,7 +78,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 
 		if (!$this->connection) {
 			$err = oci_error();
-			throw new DibiDriverException($err['message'], $err['code']);
+			throw new Dibi\DriverException($err['message'], $err['code']);
 		}
 	}
 
@@ -94,8 +98,8 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
@@ -104,11 +108,11 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 			oci_execute($this->resultSet, $this->autocommit ? OCI_COMMIT_ON_SUCCESS : OCI_DEFAULT);
 			$err = oci_error($this->resultSet);
 			if ($err) {
-				throw new DibiDriverException($err['message'], $err['code'], $sql);
+				throw new Dibi\DriverException($err['message'], $err['code'], $sql);
 			}
 		} else {
 			$err = oci_error($this->connection);
-			throw new DibiDriverException($err['message'], $err['code'], $sql);
+			throw new Dibi\DriverException($err['message'], $err['code'], $sql);
 		}
 
 		return is_resource($this->resultSet) ? clone $this : NULL;
@@ -122,7 +126,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getAffectedRows()
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -156,13 +160,13 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
 		if (!oci_commit($this->connection)) {
 			$err = oci_error($this->connection);
-			throw new DibiDriverException($err['message'], $err['code']);
+			throw new Dibi\DriverException($err['message'], $err['code']);
 		}
 		$this->autocommit = TRUE;
 	}
@@ -173,13 +177,13 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
 		if (!oci_rollback($this->connection)) {
 			$err = oci_error($this->connection);
-			throw new DibiDriverException($err['message'], $err['code']);
+			throw new Dibi\DriverException($err['message'], $err['code']);
 		}
 		$this->autocommit = TRUE;
 	}
@@ -204,33 +208,33 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
-		case dibi::BINARY:
+		case Dibi\dibi::TEXT:
+		case Dibi\dibi::BINARY:
 			return "'" . str_replace("'", "''", $value) . "'"; // TODO: not tested
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			// @see http://download.oracle.com/docs/cd/B10500_01/server.920/a96540/sql_elements9a.htm
 			$value = str_replace('"', '""', $value);
 			return '"' . str_replace('.', '"."', $value) . '"';
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $value ? 1 : 0;
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format($this->fmtDate) : date($this->fmtDate, $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format($this->fmtDate) : date($this->fmtDate, $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format($this->fmtDateTime) : date($this->fmtDateTime, $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format($this->fmtDateTime) : date($this->fmtDateTime, $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new \InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -239,16 +243,16 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Decodes data from result set.
 	 * @param  string    value
-	 * @param  string    type (dibi::BINARY)
+	 * @param  string    type (Dibi\dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return $value;
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -283,7 +287,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getRowCount()
 	{
-		throw new NotSupportedException('Row count is not available for unbuffered queries.');
+		throw new Dibi\NotSupportedException('Row count is not available for unbuffered queries.');
 	}
 
 
@@ -308,7 +312,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function seek($row)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -390,7 +394,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getColumns($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -402,7 +406,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getIndexes($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -414,7 +418,7 @@ class DibiOracleDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

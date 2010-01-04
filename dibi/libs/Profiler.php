@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * dibi basic logger & profiler (experimental).
@@ -18,7 +20,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiProfiler extends DibiObject implements IDibiProfiler
+class Profiler extends Object implements IProfiler
 {
 	/** maximum number of rows */
 	const FIREBUG_MAX_ROWS = 30;
@@ -52,7 +54,7 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 
 	/**
 	 * @param  string  filename
-	 * @return DibiProfiler  provides a fluent interface
+	 * @return Profiler  provides a fluent interface
 	 */
 	public function setFile($file)
 	{
@@ -64,7 +66,7 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 
 	/**
 	 * @param  int
-	 * @return DibiProfiler  provides a fluent interface
+	 * @return Profiler  provides a fluent interface
 	 */
 	public function setFilter($filter)
 	{
@@ -76,12 +78,12 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 
 	/**
 	 * Before event notification.
-	 * @param  DibiConnection
+	 * @param  Connection
 	 * @param  int     event name
 	 * @param  string  sql
 	 * @return int
 	 */
-	public function before(DibiConnection $connection, $event, $sql = NULL)
+	public function before(Connection $connection, $event, $sql = NULL)
 	{
 		$this->tickets[] = array($connection, $event, $sql);
 		end($this->tickets);
@@ -93,13 +95,13 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 	/**
 	 * After event notification.
 	 * @param  int
-	 * @param  DibiResult
+	 * @param  Result
 	 * @return void
 	 */
 	public function after($ticket, $res = NULL)
 	{
 		if (!isset($this->tickets[$ticket])) {
-			throw new InvalidArgumentException('Bad ticket number.');
+			throw new \InvalidArgumentException('Bad ticket number.');
 		}
 
 		list($connection, $event, $sql) = $this->tickets[$ticket];
@@ -109,8 +111,8 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 
 		if ($event & self::QUERY) {
 			try {
-				$count = $res instanceof DibiResult ? count($res) : '-';
-			} catch (Exception $e) {
+				$count = $res instanceof Result ? count($res) : '-';
+			} catch (\Exception $e) {
 				$count = '?';
 			}
 
@@ -146,7 +148,7 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 			if ($this->file) {
 				$this->writeFile(
 					"OK: " . $sql
-					. ($res instanceof DibiResult ? ";\n-- rows: " . $count : '')
+					. ($res instanceof Result ? ";\n-- rows: " . $count : '')
 					. "\n-- takes: " . sprintf('%0.3f', dibi::$elapsedTime * 1000) . ' ms'
 					. "\n-- driver: " . $connection->getConfig('driver') . '/' . $connection->getConfig('name')
 					. "\n-- " . date('Y-m-d H:i:s')
@@ -160,10 +162,10 @@ class DibiProfiler extends DibiObject implements IDibiProfiler
 
 	/**
 	 * After exception notification.
-	 * @param  DibiDriverException
+	 * @param  DriverException
 	 * @return void
 	 */
-	public function exception(DibiDriverException $exception)
+	public function exception(DriverException $exception)
 	{
 		if ((self::EXCEPTION & $this->filter) === 0) return;
 

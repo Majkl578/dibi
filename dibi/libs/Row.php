@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * Result-set single row.
@@ -18,7 +20,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiRow extends ArrayObject
+class Row extends \ArrayObject
 {
 
 	/**
@@ -47,13 +49,13 @@ class DibiRow extends ArrayObject
 			return is_numeric($time) ? (int) $time : strtotime($time);
 
 		} elseif ($format === TRUE) { // return DateTime object
-			return new DateTime(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
+			return new \DateTime(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
 
 		} elseif (is_numeric($time)) { // single timestamp
 			return date($format, $time);
 
 		} else {
-			$time = new DateTime($time);
+			$time = new \DateTime($time);
 			return $time->format($format);
 		}
 	}
@@ -74,17 +76,6 @@ class DibiRow extends ArrayObject
 		} else {
 			return ((bool) $value) && $value !== 'f' && $value !== 'F';
 		}
-	}
-
-
-
-	/**
-	 * PHP < 5.3 workaround
-	 * @return void
-	 */
-	public function __wakeup()
-	{
-		$this->setFlags(2);
 	}
 
 }

@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * dibi SQL builder via fluent interfaces. EXPERIMENTAL!
@@ -18,7 +20,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiFluent extends DibiObject implements IDataSource
+class Fluent extends Object implements IDataSource
 {
 	/** @var array */
 	public static $masks = array(
@@ -57,7 +59,7 @@ class DibiFluent extends DibiObject implements IDataSource
 		'INTO' => FALSE,
 	);
 
-	/** @var DibiConnection */
+	/** @var Connection */
 	private $connection;
 
 	/** @var string */
@@ -75,9 +77,9 @@ class DibiFluent extends DibiObject implements IDataSource
 
 
 	/**
-	 * @param  DibiConnection
+	 * @param  Connection
 	 */
-	public function __construct(DibiConnection $connection)
+	public function __construct(Connection $connection)
 	{
 		$this->connection = $connection;
 	}
@@ -88,7 +90,7 @@ class DibiFluent extends DibiObject implements IDataSource
 	 * Appends new argument to the clause.
 	 * @param  string clause name
 	 * @param  array  arguments
-	 * @return DibiFluent  provides a fluent interface
+	 * @return Fluent  provides a fluent interface
 	 */
 	public function __call($clause, $args)
 	{
@@ -117,7 +119,7 @@ class DibiFluent extends DibiObject implements IDataSource
 			} elseif ($arg instanceof self) {
 				$args = array_merge(array('('), $arg->_export(), array(')'));
 
-			} elseif (is_array($arg) || $arg instanceof ArrayObject) { // any array
+			} elseif (is_array($arg) || $arg instanceof \ArrayObject) { // any array
 				if (isset(self::$modifiers[$clause])) {
 					$args = array(self::$modifiers[$clause], $arg);
 
@@ -169,7 +171,7 @@ class DibiFluent extends DibiObject implements IDataSource
 	/**
 	 * Switch to a clause.
 	 * @param  string clause name
-	 * @return DibiFluent  provides a fluent interface
+	 * @return Fluent  provides a fluent interface
 	 */
 	public function clause($clause, $remove = FALSE)
 	{
@@ -191,7 +193,7 @@ class DibiFluent extends DibiObject implements IDataSource
 	 * Change a SQL flag.
 	 * @param  string  flag name
 	 * @param  bool  value
-	 * @return DibiFluent  provides a fluent interface
+	 * @return Fluent  provides a fluent interface
 	 */
 	public function setFlag($flag, $value = TRUE)
 	{
@@ -231,7 +233,7 @@ class DibiFluent extends DibiObject implements IDataSource
 
 	/**
 	 * Returns the dibi connection.
-	 * @return DibiConnection
+	 * @return Connection
 	 */
 	final public function getConnection()
 	{
@@ -247,8 +249,8 @@ class DibiFluent extends DibiObject implements IDataSource
 	/**
 	 * Generates and executes SQL query.
 	 * @param  mixed what to return?
-	 * @return DibiResult|int  result set object (if any)
-	 * @throws DibiException
+	 * @return Result|int  result set object (if any)
+	 * @throws Exception
 	 */
 	public function execute($return = NULL)
 	{
@@ -260,7 +262,7 @@ class DibiFluent extends DibiObject implements IDataSource
 
 	/**
 	 * Generates, executes SQL query and fetches the single row.
-	 * @return DibiRow|FALSE  array on success, FALSE if no next record
+	 * @return Row|FALSE  array on success, FALSE if no next record
 	 */
 	public function fetch()
 	{
@@ -330,7 +332,7 @@ class DibiFluent extends DibiObject implements IDataSource
 	 * Required by the IteratorAggregate interface.
 	 * @param  int  offset
 	 * @param  int  limit
-	 * @return DibiResultIterator
+	 * @return ResultIterator
 	 */
 	public function getIterator($offset = NULL, $limit = NULL)
 	{
@@ -368,11 +370,11 @@ class DibiFluent extends DibiObject implements IDataSource
 
 
 	/**
-	 * @return DibiDataSource
+	 * @return DataSource
 	 */
 	public function toDataSource()
 	{
-		return new DibiDataSource($this->connection->sql($this->_export()), $this->connection);
+		return new DataSource($this->connection->sql($this->_export()), $this->connection);
 	}
 
 
@@ -389,7 +391,7 @@ class DibiFluent extends DibiObject implements IDataSource
 
 
 	/**
-	 * Generates parameters for DibiTranslator.
+	 * Generates parameters for Translator.
 	 * @param  string clause name
 	 * @return array
 	 */
@@ -437,13 +439,4 @@ class DibiFluent extends DibiObject implements IDataSource
 
 	}
 
-}
-
-
-// PHP < 5.2 compatibility
-if (!function_exists('array_fill_keys')) {
-	function array_fill_keys($keys, $value)
-	{
-		return array_combine($keys, array_fill(0, count($keys), $value));
-	}
 }

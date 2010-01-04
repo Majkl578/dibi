@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi, PDO;
+
+
 /**
  * The dibi driver for PDO.
  *
@@ -25,7 +29,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiPdoDriver extends DibiObject implements IDibiDriver
+class Pdo extends Dibi\Object implements Dibi\IDriver
 {
 	/** @var PDO  Connection resource */
 	private $connection;
@@ -39,12 +43,12 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('pdo')) {
-			throw new DibiDriverException("PHP extension 'pdo' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'pdo' is not loaded.");
 		}
 	}
 
@@ -53,13 +57,13 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
-		DibiConnection::alias($config, 'dsn');
-		DibiConnection::alias($config, 'resource', 'pdo');
-		DibiConnection::alias($config, 'options');
+		Dibi\Connection::alias($config, 'dsn');
+		Dibi\Connection::alias($config, 'resource', 'pdo');
+		Dibi\Connection::alias($config, 'options');
 
 		if ($config['resource'] instanceof PDO) {
 			$this->connection = $config['resource'];
@@ -67,12 +71,12 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 		} else try {
 			$this->connection = new PDO($config['dsn'], $config['username'], $config['password'], $config['options']);
 
-		} catch (PDOException $e) {
-			throw new DibiDriverException($e->getMessage(), $e->getCode());
+		} catch (\PDOException $e) {
+			throw new Dibi\DriverException($e->getMessage(), $e->getCode());
 		}
 
 		if (!$this->connection) {
-			throw new DibiDriverException('Connecting error.');
+			throw new Dibi\DriverException('Connecting error.');
 		}
 	}
 
@@ -92,8 +96,8 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
@@ -107,7 +111,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 
 			if ($this->affectedRows === FALSE) {
 				$err = $this->connection->errorInfo();
-				throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
+				throw new Dibi\DriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
 			}
 
 			return NULL;
@@ -118,7 +122,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 
 			if ($this->resultSet === FALSE) {
 				$err = $this->connection->errorInfo();
-				throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
+				throw new Dibi\DriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
 			}
 
 			return clone $this;
@@ -153,13 +157,13 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function begin($savepoint = NULL)
 	{
 		if (!$this->connection->beginTransaction()) {
 			$err = $this->connection->errorInfo();
-			throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
+			throw new Dibi\DriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
 		}
 	}
 
@@ -169,13 +173,13 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
 		if (!$this->connection->commit()) {
 			$err = $this->connection->errorInfo();
-			throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
+			throw new Dibi\DriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
 		}
 	}
 
@@ -185,13 +189,13 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
 		if (!$this->connection->rollBack()) {
 			$err = $this->connection->errorInfo();
-			throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
+			throw new Dibi\DriverException("SQLSTATE[$err[0]]: $err[2]", $err[1]);
 		}
 	}
 
@@ -199,7 +203,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 
 	/**
 	 * Returns the connection resource.
-	 * @return PDO
+	 * @return \PDO
 	 */
 	public function getResource()
 	{
@@ -215,20 +219,20 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
+		case Dibi\dibi::TEXT:
 			return $this->connection->quote($value, PDO::PARAM_STR);
 
-		case dibi::BINARY:
+		case Dibi\dibi::BINARY:
 			return $this->connection->quote($value, PDO::PARAM_LOB);
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			switch ($this->connection->getAttribute(PDO::ATTR_DRIVER_NAME)) {
 			case 'mysql':
 				$value = str_replace('`', '``', $value);
@@ -255,17 +259,17 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 				return $value;
 			}
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $this->connection->quote($value, PDO::PARAM_BOOL);
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new \InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -274,16 +278,16 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Decodes data from result set.
 	 * @param  string    value
-	 * @param  string    type (dibi::BINARY)
+	 * @param  string    type (Dibi\dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return $value;
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -332,7 +336,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 			// intentionally break omitted
 
 		default:
-			throw new NotSupportedException('PDO or driver does not support applying limit or offset.');
+			throw new \NotSupportedException('PDO or driver does not support applying limit or offset.');
 		}
 	}
 
@@ -348,7 +352,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getRowCount()
 	{
-		throw new NotSupportedException('Row count is not available for unbuffered queries.');
+		throw new \NotSupportedException('Row count is not available for unbuffered queries.');
 	}
 
 
@@ -373,7 +377,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function seek($row)
 	{
-		throw new NotSupportedException('Cannot seek an unbuffered result set.');
+		throw new \NotSupportedException('Cannot seek an unbuffered result set.');
 	}
 
 
@@ -392,7 +396,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Returns metadata for all columns in a result set.
 	 * @return array
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function getColumnsMeta()
 	{
@@ -401,7 +405,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 		for ($i = 0; $i < $count; $i++) {
 			$row = @$this->resultSet->getColumnMeta($i); // intentionally @
 			if ($row === FALSE) {
-				throw new DibiDriverException('Driver does not support meta data.');
+				throw new Dibi\DriverException('Driver does not support meta data.');
 			}
 			$res[] = array(
 				'name' => $row['name'],
@@ -418,7 +422,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 
 	/**
 	 * Returns the result set resource.
-	 * @return PDOStatement
+	 * @return \PDOStatement
 	 */
 	public function getResultResource()
 	{
@@ -437,7 +441,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getTables()
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -449,7 +453,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getColumns($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -461,7 +465,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getIndexes($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -473,7 +477,7 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

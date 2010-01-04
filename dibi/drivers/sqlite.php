@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi;
+
+
 /**
  * The dibi driver for SQLite database.
  *
@@ -28,7 +32,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiSqliteDriver extends DibiObject implements IDibiDriver
+class Sqlite extends Dibi\Object implements Dibi\IDriver
 {
 	/** @var resource  Connection resource */
 	private $connection;
@@ -48,12 +52,12 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('sqlite')) {
-			throw new DibiDriverException("PHP extension 'sqlite' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'sqlite' is not loaded.");
 		}
 	}
 
@@ -62,11 +66,11 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
-		DibiConnection::alias($config, 'database', 'file');
+		Dibi\Connection::alias($config, 'database', 'file');
 		$this->fmtDate = isset($config['formatDate']) ? $config['formatDate'] : 'U';
 		$this->fmtDateTime = isset($config['formatDateTime']) ? $config['formatDateTime'] : 'U';
 
@@ -80,7 +84,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 		}
 
 		if (!$this->connection) {
-			throw new DibiDriverException($errorMsg);
+			throw new Dibi\DriverException($errorMsg);
 		}
 
 		$this->buffered = empty($config['unbuffered']);
@@ -108,8 +112,8 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
@@ -117,14 +121,14 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 			$sql = iconv($this->charset, $this->dbcharset . '//IGNORE', $sql);
 		}
 
-		DibiDriverException::tryError();
+		Dibi\DriverException::tryError();
 		if ($this->buffered) {
 			$this->resultSet = sqlite_query($this->connection, $sql);
 		} else {
 			$this->resultSet = sqlite_unbuffered_query($this->connection, $sql);
 		}
-		if (DibiDriverException::catchError($msg)) {
-			throw new DibiDriverException($msg, sqlite_last_error($this->connection), $sql);
+		if (Dibi\DriverException::catchError($msg)) {
+			throw new Dibi\DriverException($msg, sqlite_last_error($this->connection), $sql);
 		}
 
 		return is_resource($this->resultSet) ? clone $this : NULL;
@@ -158,7 +162,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function begin($savepoint = NULL)
 	{
@@ -171,7 +175,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
@@ -184,7 +188,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
@@ -211,31 +215,31 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
-		case dibi::BINARY:
+		case Dibi\dibi::TEXT:
+		case Dibi\dibi::BINARY:
 			return "'" . sqlite_escape_string($value) . "'";
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			return '[' . str_replace('.', '].[', strtr($value, '[]', '  ')) . ']';
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $value ? 1 : 0;
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format($this->fmtDate) : date($this->fmtDate, $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format($this->fmtDate) : date($this->fmtDate, $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format($this->fmtDateTime) : date($this->fmtDateTime, $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format($this->fmtDateTime) : date($this->fmtDateTime, $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new \InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -244,16 +248,16 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	/**
 	 * Decodes data from result set.
 	 * @param  string    value
-	 * @param  string    type (dibi::BINARY)
+	 * @param  string    type (Dibi\dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return $value;
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -284,7 +288,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	public function getRowCount()
 	{
 		if (!$this->buffered) {
-			throw new DibiDriverException('Row count is not available for unbuffered queries.');
+			throw new Dibi\DriverException('Row count is not available for unbuffered queries.');
 		}
 		return sqlite_num_rows($this->resultSet);
 	}
@@ -320,12 +324,12 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
 	 * @return boolean  TRUE on success, FALSE if unable to seek to specified record
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function seek($row)
 	{
 		if (!$this->buffered) {
-			throw new DibiDriverException('Cannot seek an unbuffered result set.');
+			throw new Dibi\DriverException('Cannot seek an unbuffered result set.');
 		}
 		return sqlite_seek($this->resultSet, $row);
 	}
@@ -410,7 +414,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getColumns($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -422,7 +426,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getIndexes($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -434,7 +438,7 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 

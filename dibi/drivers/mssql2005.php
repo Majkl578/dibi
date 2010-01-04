@@ -11,6 +11,10 @@
  */
 
 
+namespace Dibi\Drivers;
+use Dibi;
+
+
 /**
  * The dibi driver for MS SQL Driver 2005 database.
  *
@@ -24,7 +28,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
+class MsSql2005 extends Dibi\Object implements Dibi\IDriver
 {
 	/** @var resource  Connection resource */
 	private $connection;
@@ -35,12 +39,12 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 
 
 	/**
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function __construct()
 	{
 		if (!extension_loaded('sqlsrv')) {
-			throw new DibiDriverException("PHP extension 'sqlsrv' is not loaded.");
+			throw new Dibi\DriverException("PHP extension 'sqlsrv' is not loaded.");
 		}
 	}
 
@@ -49,7 +53,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	/**
 	 * Connects to a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Dibi\Exception
 	 */
 	public function connect(array &$config)
 	{
@@ -65,7 +69,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 
 		if (!is_resource($this->connection)) {
 			$info = sqlsrv_errors();
-			throw new DibiDriverException($info[0]['message'], $info[0]['code']);
+			throw new Dibi\DriverException($info[0]['message'], $info[0]['code']);
 		}
 	}
 
@@ -85,8 +89,8 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	/**
 	 * Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return Dibi\IDriver|NULL
+	 * @throws Dibi\DriverException
 	 */
 	public function query($sql)
 	{
@@ -94,7 +98,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 
 		if ($this->resultSet === FALSE) {
 			$info = sqlsrv_errors();
-			throw new DibiDriverException($info[0]['message'], $info[0]['code'], $sql);
+			throw new Dibi\DriverException($info[0]['message'], $info[0]['code'], $sql);
 		}
 
 		return is_resource($this->resultSet) ? clone $this : NULL;
@@ -133,7 +137,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function begin($savepoint = NULL)
 	{
@@ -146,7 +150,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function commit($savepoint = NULL)
 	{
@@ -159,7 +163,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws Dibi\DriverException
 	 */
 	public function rollback($savepoint = NULL)
 	{
@@ -186,33 +190,33 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	/**
 	 * Encodes data for use in a SQL statement.
 	 * @param  mixed     value
-	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
+	 * @param  string    type (Dibi\dibi::TEXT, Dibi\dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function escape($value, $type)
 	{
 		switch ($type) {
-		case dibi::TEXT:
-		case dibi::BINARY:
+		case Dibi\dibi::TEXT:
+		case Dibi\dibi::BINARY:
 			return "'" . str_replace("'", "''", $value) . "'";
 
-		case dibi::IDENTIFIER:
+		case Dibi\dibi::IDENTIFIER:
 			// @see http://msdn.microsoft.com/en-us/library/ms176027.aspx
 			$value = str_replace(array('[', ']'), array('[[', ']]'), $value);
 			return '[' . str_replace('.', '].[', $value) . ']';
 
-		case dibi::BOOL:
+		case Dibi\dibi::BOOL:
 			return $value ? 1 : 0;
 
-		case dibi::DATE:
-			return $value instanceof DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
+		case Dibi\dibi::DATE:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d'") : date("'Y-m-d'", $value);
 
-		case dibi::DATETIME:
-			return $value instanceof DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
+		case Dibi\dibi::DATETIME:
+			return $value instanceof \DateTime ? $value->format("'Y-m-d H:i:s'") : date("'Y-m-d H:i:s'", $value);
 
 		default:
-			throw new InvalidArgumentException('Unsupported type.');
+			throw new \InvalidArgumentException('Unsupported type.');
 		}
 	}
 
@@ -221,16 +225,16 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	/**
 	 * Decodes data from result set.
 	 * @param  string    value
-	 * @param  string    type (dibi::BINARY)
+	 * @param  string    type (Dibi\dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function unescape($value, $type)
 	{
-		if ($type === dibi::BINARY) {
+		if ($type === Dibi\dibi::BINARY) {
 			return $value;
 		}
-		throw new InvalidArgumentException('Unsupported type.');
+		throw new \InvalidArgumentException('Unsupported type.');
 	}
 
 
@@ -250,7 +254,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 		}
 
 		if ($offset) {
-			throw new NotImplementedException('Offset is not implemented.');
+			throw new \NotImplementedException('Offset is not implemented.');
 		}
 	}
 
@@ -266,7 +270,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function getRowCount()
 	{
-		throw new NotSupportedException('Row count is not available for unbuffered queries.');
+		throw new \NotSupportedException('Row count is not available for unbuffered queries.');
 	}
 
 
@@ -291,7 +295,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function seek($row)
 	{
-		throw new NotSupportedException('Cannot seek an unbuffered result set.');
+		throw new \NotSupportedException('Cannot seek an unbuffered result set.');
 	}
 
 
@@ -350,7 +354,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function getTables()
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -362,7 +366,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function getColumns($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -374,7 +378,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function getIndexes($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 
@@ -386,7 +390,7 @@ class DibiMsSql2005Driver extends DibiObject implements IDibiDriver
 	 */
 	public function getForeignKeys($table)
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

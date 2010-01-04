@@ -11,6 +11,8 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * dibi common exception.
@@ -18,7 +20,7 @@
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiException extends Exception implements /*Nette\*/IDebuggable
+class Exception extends \Exception implements \Nette\IDebuggable
 {
 	/** @var string */
 	private $sql;
@@ -59,7 +61,7 @@ class DibiException extends Exception implements /*Nette\*/IDebuggable
 
 
 
-	/********************* interface Nette\IDebuggable ****************d*g**/
+	/********************* interface \Nette\IDebuggable ****************d*g**/
 
 
 	/**
@@ -89,7 +91,7 @@ class DibiException extends Exception implements /*Nette\*/IDebuggable
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-class DibiDriverException extends DibiException
+class DriverException extends Exception
 {
 
 	/********************* error catching ****************d*g**/
@@ -142,6 +144,47 @@ class DibiDriverException extends DibiException
 		}
 
 		self::$errorMsg = $message;
+	}
+
+}
+
+
+
+
+/**
+ * Database procedure exception.
+ *
+ * @author     Roman Sklenář
+ * @copyright  Copyright (c) 2010
+ * @package    dibi
+ */
+class ProcedureException extends Exception
+{
+	/** @var string */
+	protected $severity;
+
+
+	/**
+	 * Construct the exception.
+	 * @param  string  Message describing the exception
+	 * @param  int     Some code
+	 * @param  string SQL command
+	 */
+	public function __construct($message = NULL, $code = 0, $severity = NULL, $sql = NULL)
+	{
+		parent::__construct($message, (int) $code, $sql);
+		$this->severity = $severity;
+	}
+
+
+
+	/**
+	 * Gets the exception severity.
+	 * @return string
+	 */
+	public function getSeverity()
+	{
+		$this->severity;
 	}
 
 }

@@ -11,15 +11,17 @@
  */
 
 
+namespace Dibi;
+
 
 /**
  * Provides an interface between a dataset and data-aware components.
  * @package dibi
  */
-interface IDataSource extends Countable, IteratorAggregate
+interface IDataSource extends \Countable, \IteratorAggregate
 {
-	//function IteratorAggregate::getIterator();
-	//function Countable::count();
+	//function \IteratorAggregate::getIterator();
+	//function \Countable::count();
 }
 
 
@@ -30,7 +32,7 @@ interface IDataSource extends Countable, IteratorAggregate
  * Defines method that must profiler implement.
  * @package dibi
  */
-interface IDibiProfiler
+interface IProfiler
 {
 	/**#@+ event type */
 	const CONNECT = 1;
@@ -49,27 +51,27 @@ interface IDibiProfiler
 
 	/**
 	 * Before event notification.
-	 * @param  DibiConnection
+	 * @param  Connection
 	 * @param  int     event name
 	 * @param  string  sql
 	 * @return int
 	 */
-	function before(DibiConnection $connection, $event, $sql = NULL);
+	function before(Connection $connection, $event, $sql = NULL);
 
 	/**
 	 * After event notification.
 	 * @param  int
-	 * @param  DibiResult
+	 * @param  Result
 	 * @return void
 	 */
 	function after($ticket, $result = NULL);
 
 	/**
 	 * After exception notification.
-	 * @param  DibiDriverException
+	 * @param  DriverException
 	 * @return void
 	 */
-	function exception(DibiDriverException $exception);
+	function exception(DriverException $exception);
 
 }
 
@@ -83,29 +85,29 @@ interface IDibiProfiler
  * @copyright  Copyright (c) 2005, 2010 David Grudl
  * @package    dibi
  */
-interface IDibiDriver
+interface IDriver
 {
 
 	/**
 	 * Connects to a database.
 	 * @param  array
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	function connect(array &$config);
 
 	/**
 	 * Disconnects from a database.
 	 * @return void
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	function disconnect();
 
 	/**
 	 * Internal: Executes the SQL query.
 	 * @param  string      SQL statement.
-	 * @return IDibiDriver|NULL
-	 * @throws DibiDriverException
+	 * @return IDriver|NULL
+	 * @throws DriverException
 	 */
 	function query($sql);
 
@@ -125,7 +127,7 @@ interface IDibiDriver
 	 * Begins a transaction (if supported).
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws DriverException
 	 */
 	function begin($savepoint = NULL);
 
@@ -133,7 +135,7 @@ interface IDibiDriver
 	 * Commits statements in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws DriverException
 	 */
 	function commit($savepoint = NULL);
 
@@ -141,7 +143,7 @@ interface IDibiDriver
 	 * Rollback changes in a transaction.
 	 * @param  string  optional savepoint name
 	 * @return void
-	 * @throws DibiDriverException
+	 * @throws DriverException
 	 */
 	function rollback($savepoint = NULL);
 
@@ -162,7 +164,7 @@ interface IDibiDriver
 	 * @param  string    value
 	 * @param  string    type (dibi::TEXT, dibi::BOOL, ...)
 	 * @return string    encoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	function escape($value, $type);
 
@@ -171,7 +173,7 @@ interface IDibiDriver
 	 * @param  string    value
 	 * @param  string    type (dibi::BINARY)
 	 * @return string    decoded value
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	function unescape($value, $type);
 
@@ -200,7 +202,7 @@ interface IDibiDriver
 	 * Moves cursor position without fetching row.
 	 * @param  int      the 0-based cursor pos to seek to
 	 * @return boolean  TRUE on success, FALSE if unable to seek to specified record
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	function seek($row);
 
@@ -222,7 +224,7 @@ interface IDibiDriver
 	/**
 	 * Returns metadata for all columns in a result set.
 	 * @return array
-	 * @throws DibiException
+	 * @throws Exception
 	 */
 	function getColumnsMeta();
 
