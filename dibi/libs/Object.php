@@ -157,6 +157,7 @@ abstract class Object
 			foreach ($list['user'] as $fce) {
 				$pair = explode('_prototype_', $fce);
 				if (count($pair) === 2) {
+					$pair[0] = str_replace('_', '\\', $pair[0]); //_ means namespace
 					self::$extMethods[$pair[1]][$pair[0]] = $fce;
 					self::$extMethods[$pair[1]][''] = NULL;
 				}
