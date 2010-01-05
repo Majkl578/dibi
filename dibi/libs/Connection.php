@@ -84,7 +84,7 @@ class Connection extends Object
 		if (!empty($config['profiler'])) {
 			$class = $config['profiler'];
 			if (is_numeric($class) || is_bool($class)) {
-				$class = 'Profiler';
+				$class = 'Dibi\Profiler';
 			}
 			if (!class_exists($class)) {
 				throw new Exception("Unable to create instance of dibi profiler '$class'.");
