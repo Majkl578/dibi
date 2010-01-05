@@ -4,6 +4,8 @@
 require_once 'Nette/Debug.php';
 require_once '../dibi/dibi.php';
 
+use Dibi\dibi;
+
 
 // connects to SQlite
 echo '<p>Connecting to Sqlite: ';

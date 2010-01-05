@@ -3,6 +3,8 @@
 require_once 'Nette/Debug.php';
 require_once '../dibi/dibi.php';
 
+use Dibi\dibi;
+
 
 dibi::connect(array(
 	'driver'   => 'sqlite',

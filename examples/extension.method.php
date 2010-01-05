@@ -5,6 +5,8 @@
 require_once 'Nette/Debug.php';
 require_once '../dibi/dibi.php';
 
+use Dibi\dibi;
+
 
 dibi::connect(array(
 	'driver'   => 'sqlite',
@@ -14,7 +16,7 @@ dibi::connect(array(
 
 
 // using the "prototype" to add custom method to class DibiResult
-function DibiResult_prototype_fetchShuffle(DibiResult $obj)
+function Dibi_Result_prototype_fetchShuffle(\Dibi\Result $obj)
 {
 	$all = $obj->fetchAll();
 	shuffle($all);
